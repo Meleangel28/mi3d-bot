@@ -1,6 +1,7 @@
 from flask import Flask, request
 import os
 import requests
+import json
 
 app = Flask(__name__)
 
@@ -22,6 +23,10 @@ def verificar_webhook():
 @app.route("/webhook", methods=["POST"])
 def recibir_evento():
     data = request.get_json()
+
+    # 🔍 Depuración completa del payload
+    print("🔍 Payload completo:\n", json.dumps(data, indent=2))
+
     print("📦 Webhook recibido:", data)
 
     # 🔧 Para pruebas manuales (sin entry[])
