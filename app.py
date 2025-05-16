@@ -24,36 +24,40 @@ def recibir_evento():
     data = request.get_json()
     print("📦 Webhook recibido:", data)
 
-    # 🧪 Casos de prueba enviados por Meta directamente (sin entry[])
-    if data.get("field") == "messages" and "value" in data:
-        value = data["value"]
+    # 🔧 Para pruebas manuales (sin entry[])
+    if data.get("field") == "messages":
+        value = data.get("value", {})
         sender_id = value.get("sender", {}).get("id")
         mensaje = value.get("message", {}).get("text", "")
         if sender_id and mensaje:
-            print(f"📩 [TEST] Mensaje de {sender_id}: {mensaje}")
+            print(f"🧪 [PRUEBA] Mensaje de {sender_id}: {mensaje}")
             enviar_respuesta(sender_id, "✅ Webhook de prueba recibido correctamente.")
 
-    # 📬 Casos reales desde Instagram (con entry[])
+    # 🔧 Para producción (con entry[] y changes[])
     elif "entry" in data:
         for entry in data["entry"]:
-            field = entry.get("field")
-            value = entry.get("value", {})
+            for change in entry.get("changes", []):
+                field = change.get("field")
+                value = change.get("value", {})
 
-            sender_id = value.get("sender", {}).get("id")
-            mensaje = value.get("message", {}).get("text", "")
+                sender_id = value.get("sender", {}).get("id")
 
-            if field == "messages" and sender_id and mensaje:
-                print(f"📩 [REAL] Mensaje de {sender_id}: {mensaje}")
-                enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D. Te responderemos pronto.")
+                # 💬 Mensajes
+                if field == "messages" and "message" in value:
+                    mensaje = value["message"].get("text", "")
+                    print(f"📩 [INSTAGRAM] Mensaje de {sender_id}: {mensaje}")
+                    enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D.")
 
-            elif field == "message_reactions" and "reaction" in value:
-                emoji = value["reaction"].get("emoji", "")
-                print(f"💖 Reacción de {sender_id}: {emoji}")
+                # ❤️ Reacciones
+                elif field == "message_reactions" and "reaction" in value:
+                    emoji = value["reaction"].get("emoji", "")
+                    print(f"💖 Reacción de {sender_id}: {emoji}")
 
-            elif field == "messaging_postbacks" and "postback" in value:
-                payload = value["postback"].get("payload", "")
-                print(f"📦 Postback de {sender_id}: {payload}")
-                enviar_respuesta(sender_id, f"Recibido: {payload}")
+                # ⬇️ Postbacks
+                elif field == "messaging_postbacks" and "postback" in value:
+                    payload = value["postback"].get("payload", "")
+                    print(f"📦 Postback de {sender_id}: {payload}")
+                    enviar_respuesta(sender_id, f"Recibido: {payload}")
 
     return "ok", 200
 
