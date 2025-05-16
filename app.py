@@ -26,23 +26,29 @@ def recibir_evento():
 
     if "entry" in data:
         for entry in data["entry"]:
-            # 🟢 Instagram: estructura con field/value
-            if entry.get("field") == "messages":
-                value = entry.get("value", {})
-                sender_id = value.get("sender", {}).get("id")
-                mensaje = value.get("message", {}).get("text", "")
-                if sender_id and mensaje:
-                    print(f"📩 [IG] Mensaje de {sender_id}: {mensaje}")
-                    enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D. Te responderemos pronto.")
+            field = entry.get("field")
+            value = entry.get("value", {})
 
-            # 🔵 Facebook Messenger: estructura con messaging[]
-            if "messaging" in entry:
-                for event in entry["messaging"]:
-                    sender_id = event.get("sender", {}).get("id")
-                    mensaje = event.get("message", {}).get("text")
-                    if sender_id and mensaje:
-                        print(f"📩 [FB] Mensaje de {sender_id}: {mensaje}")
-                        enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D.")
+            sender_id = value.get("sender", {}).get("id")
+            recipient_id = value.get("recipient", {}).get("id")
+            timestamp = value.get("timestamp")
+
+            # 💬 Mensajes de texto
+            if field == "messages" and "message" in value:
+                mensaje = value["message"].get("text", "")
+                print(f"📩 [Mensaje] De: {sender_id}, Texto: {mensaje}")
+                enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D.")
+
+            # ❤️ Reacciones a mensajes
+            elif field == "message_reactions" and "reaction" in value:
+                emoji = value["reaction"].get("emoji", "")
+                print(f"💖 [Reacción] De: {sender_id}, Emoji: {emoji}")
+
+            # ⬇️ Postbacks (botones)
+            elif field == "messaging_postbacks" and "postback" in value:
+                payload = value["postback"].get("payload", "")
+                print(f"📦 [Postback] De: {sender_id}, Payload: {payload}")
+                enviar_respuesta(sender_id, f"Recibido: {payload}")
 
     return "ok", 200
 
