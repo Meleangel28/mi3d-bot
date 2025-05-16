@@ -20,19 +20,23 @@ def verificar_webhook():
     return "❌ Token inválido", 403
 
 @app.route("/webhook", methods=["POST"])
-def recibir_webhook():
+def recibir_evento():
     data = request.get_json()
-    print("📦 Datos recibidos:", data)
+    print("📦 Webhook recibido:", data)
 
-    # 🧪 Para pruebas desde Meta (estructura con "value")
-    if "field" in data and "value" in data:
-        value = data["value"]
-        sender_id = value.get("sender", {}).get("id")
-        message_text = value.get("message", {}).get("text")
-        if sender_id and message_text:
-            print(f"📩 Prueba de {sender_id}: {message_text}")
-            enviar_respuesta(sender_id, "✅ Webhook de prueba recibido correctamente.")
-        return "ok", 200
+    if "entry" in data:
+        for entry in data["entry"]:
+            # Estructura usada por Instagram (field/messages)
+            if entry.get("field") == "messages":
+                value = entry.get("value", {})
+                sender_id = value.get("sender", {}).get("id")
+                mensaje = value.get("message", {}).get("text", "")
+                
+                if sender_id and mensaje:
+                    print(f"📩 Mensaje de {sender_id}: {mensaje}")
+                    enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D. Te responderemos pronto.")
+
+    return "ok", 200
 
     # 💬 Para mensajes reales (estructura con "entry" y "messaging")
     if "entry" in data:
