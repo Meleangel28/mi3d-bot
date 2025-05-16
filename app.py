@@ -24,30 +24,35 @@ def recibir_evento():
     data = request.get_json()
     print("📦 Webhook recibido:", data)
 
-    if "entry" in data:
+    # 🧪 Casos de prueba enviados por Meta directamente (sin entry[])
+    if data.get("field") == "messages" and "value" in data:
+        value = data["value"]
+        sender_id = value.get("sender", {}).get("id")
+        mensaje = value.get("message", {}).get("text", "")
+        if sender_id and mensaje:
+            print(f"📩 [TEST] Mensaje de {sender_id}: {mensaje}")
+            enviar_respuesta(sender_id, "✅ Webhook de prueba recibido correctamente.")
+
+    # 📬 Casos reales desde Instagram (con entry[])
+    elif "entry" in data:
         for entry in data["entry"]:
             field = entry.get("field")
             value = entry.get("value", {})
 
             sender_id = value.get("sender", {}).get("id")
-            recipient_id = value.get("recipient", {}).get("id")
-            timestamp = value.get("timestamp")
+            mensaje = value.get("message", {}).get("text", "")
 
-            # 💬 Mensajes de texto
-            if field == "messages" and "message" in value:
-                mensaje = value["message"].get("text", "")
-                print(f"📩 [Mensaje] De: {sender_id}, Texto: {mensaje}")
-                enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D.")
+            if field == "messages" and sender_id and mensaje:
+                print(f"📩 [REAL] Mensaje de {sender_id}: {mensaje}")
+                enviar_respuesta(sender_id, "Hola 👋, gracias por escribir a Mi3D. Te responderemos pronto.")
 
-            # ❤️ Reacciones a mensajes
             elif field == "message_reactions" and "reaction" in value:
                 emoji = value["reaction"].get("emoji", "")
-                print(f"💖 [Reacción] De: {sender_id}, Emoji: {emoji}")
+                print(f"💖 Reacción de {sender_id}: {emoji}")
 
-            # ⬇️ Postbacks (botones)
             elif field == "messaging_postbacks" and "postback" in value:
                 payload = value["postback"].get("payload", "")
-                print(f"📦 [Postback] De: {sender_id}, Payload: {payload}")
+                print(f"📦 Postback de {sender_id}: {payload}")
                 enviar_respuesta(sender_id, f"Recibido: {payload}")
 
     return "ok", 200
